@@ -1,6 +1,7 @@
 // Live Score Integration using cricketdata.org
 
-const API_KEY = '1e768420-7aa3-46d2-951b-3ac2eadc1711';
+// API Key is securely pulled from .env file
+const API_KEY = process.env.EXPO_PUBLIC_CRIC_API_KEY || '';
 const BASE_URL = 'https://api.cricketdata.org/v1';
 
 export interface LiveMatchData {

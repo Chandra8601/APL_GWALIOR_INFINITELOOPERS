@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize the API with the user-provided key
-const API_KEY = 'AIzaSyCJISE4NrT273aPqohCQCDD1r8BT-_UlAw';
+// API Key is now securely pulled from the .env file to prevent GitHub leaks!
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 // Define a default system prompt for the Cricket Assistant context
