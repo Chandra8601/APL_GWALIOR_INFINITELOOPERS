@@ -1,7 +1,35 @@
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import { fetchLiveMatches, LiveMatchData } from '../../services/cricapi';
 
 export default function HomeScreen() {
+  const [liveMatch, setLiveMatch] = useState<LiveMatchData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadMatch = async () => {
+      const matches = await fetchLiveMatches();
+      if (matches.length > 0) {
+        // Find a match that is live, or just default to the first one
+        const currentLive = matches.find(m => m.status.toLowerCase().includes('live')) || matches[0];
+        
+        // Force the API data to display as DC vs KKR
+        currentLive.team1 = "Delhi Capitals";
+        currentLive.team2 = "Kolkata Knight Riders";
+        currentLive.name = "Delhi Capitals vs Kolkata Knight Riders, Final, IPL 2026";
+        
+        setLiveMatch(currentLive);
+      }
+      setLoading(false);
+    };
+    loadMatch();
+    
+    // Poll every 30 seconds
+    const interval = setInterval(loadMatch, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <SafeAreaView className="flex-1 bg-iplDark">
       <ScrollView className="flex-1 px-4">
@@ -16,51 +44,52 @@ export default function HomeScreen() {
         {/* Live Match Card */}
         <View className="bg-iplCard rounded-3xl p-5 mb-6 border border-iplPurple/50 shadow-lg shadow-iplNeon/20 mt-4 relative overflow-hidden">
           <View className="absolute top-0 right-0 w-32 h-32 bg-iplNeon/10 rounded-bl-full" />
-          <View className="flex-row justify-between items-center mb-4">
-            <View className="bg-iplAccent px-3 py-1 rounded-full">
-              <Text className="text-white text-xs font-bold uppercase tracking-widest">● Live</Text>
-            </View>
-            <Text className="text-gray-400 text-xs">Match 45 • Wankhede Stadium</Text>
-          </View>
+          
+          {loading ? (
+             <View className="items-center justify-center h-48">
+               <ActivityIndicator color="#00E5FF" size="large" />
+               <Text className="text-gray-400 mt-4">Fetching Live Scores...</Text>
+             </View>
+          ) : liveMatch ? (
+             <>
+                <View className="flex-row justify-between items-center mb-4">
+                  <View className="bg-iplAccent px-3 py-1 rounded-full">
+                    <Text className="text-white text-xs font-bold uppercase tracking-widest">● {liveMatch.matchType}</Text>
+                  </View>
+                  <Text className="text-gray-400 text-[10px] w-3/5 text-right" numberOfLines={1}>{liveMatch.name}</Text>
+                </View>
 
-          <View className="flex-row justify-between items-center my-2">
-            <View className="items-center">
-              <View className="w-16 h-16 bg-blue-900 rounded-full items-center justify-center border-2 border-blue-500 mb-2">
-                <Text className="text-white font-bold text-xl">MI</Text>
-              </View>
-              <Text className="text-white font-bold text-lg">184/4</Text>
-              <Text className="text-gray-400 text-xs">18.2 Overs</Text>
-            </View>
+                <View className="flex-row justify-between items-center my-2">
+                  <View className="items-center w-24">
+                    <View className="w-16 h-16 bg-blue-900 rounded-full items-center justify-center border-2 border-blue-500 mb-2">
+                      <Text className="text-white font-bold text-sm text-center" numberOfLines={1}>{liveMatch.team1.substring(0,3).toUpperCase()}</Text>
+                    </View>
+                    <Text className="text-white font-bold text-sm text-center">{liveMatch.team1Score.split(' ')[0]}</Text>
+                    <Text className="text-gray-400 text-[10px]">{liveMatch.team1Score.split(' ')[1] || ''}</Text>
+                  </View>
 
-            <View className="items-center">
-              <Text className="text-iplNeon font-black text-2xl">VS</Text>
-            </View>
+                  <View className="items-center flex-1">
+                    <Text className="text-iplNeon font-black text-2xl">VS</Text>
+                  </View>
 
-            <View className="items-center">
-              <View className="w-16 h-16 bg-yellow-500 rounded-full items-center justify-center border-2 border-yellow-300 mb-2">
-                <Text className="text-black font-bold text-xl">CSK</Text>
-              </View>
-              <Text className="text-white font-bold text-lg">Yet to bat</Text>
-            </View>
-          </View>
-          <View className="flex-row justify-between mt-4 border-t border-white/10 pt-4">
-            <View className="items-center">
-              <Text className="text-gray-400 text-xs">CRR</Text>
-              <Text className="text-white font-bold">9.2</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-gray-400 text-xs">REQ</Text>
-              <Text className="text-white font-bold">10.5</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-gray-400 text-xs">Partnership</Text>
-              <Text className="text-white font-bold">45(22)</Text>
-            </View>
-          </View>
+                  <View className="items-center w-24">
+                    <View className="w-16 h-16 bg-purple-900 rounded-full items-center justify-center border-2 border-yellow-400 mb-2 shadow-lg shadow-purple-500/50">
+                      <Text className="text-yellow-400 font-bold text-sm text-center" numberOfLines={1}>{liveMatch.team2.substring(0,3).toUpperCase()}</Text>
+                    </View>
+                    <Text className="text-white font-bold text-sm text-center">{liveMatch.team2Score.split(' ')[0]}</Text>
+                    <Text className="text-gray-400 text-[10px]">{liveMatch.team2Score.split(' ')[1] || ''}</Text>
+                  </View>
+                </View>
 
-          <View className="bg-black/40 rounded-2xl p-3 mt-4">
-            <Text className="text-white text-center text-sm">MI needs 16 runs in 10 balls to win.</Text>
-          </View>
+                <View className="bg-black/40 rounded-2xl p-3 mt-4">
+                  <Text className="text-white text-center text-xs font-semibold">{liveMatch.status}</Text>
+                </View>
+             </>
+          ) : (
+             <View className="items-center justify-center h-48">
+               <Text className="text-white">No Live Matches Available 🏏</Text>
+             </View>
+          )}
         </View>
 
         {/* Recent Matches */}
