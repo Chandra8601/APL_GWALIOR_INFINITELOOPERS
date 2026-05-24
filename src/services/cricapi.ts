@@ -18,6 +18,7 @@ export interface LiveMatchData {
 export const fetchLiveMatches = async (): Promise<LiveMatchData[]> => {
   try {
     const response = await fetch(`${BASE_URL}/currentMatches?apikey=${API_KEY}&offset=0`);
+    
     const json = await response.json();
 
     if (json.status !== "success") {
